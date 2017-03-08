@@ -1,13 +1,3 @@
-//
-//  CsvToScript.hpp
-//  Csv2Script
-//
-//  Created by yexiao on 17/3/6.
-//  Copyright © 2017年 yexiao. All rights reserved.
-//
-
-#ifndef CsvToScript_hpp
-#define CsvToScript_hpp
 
 #include <iostream>
 #include <string>
@@ -24,7 +14,7 @@ private:
     string m_proj;
     string structName;
     string fileName;
-    vector<string> typeVector;//表格数据类型
+    vector<string> typeVector;//table save type
 public:
     CsvToScript();
     ~CsvToScript(){};
@@ -38,4 +28,4 @@ public:
     void writeCppScript(vector<string> attrinames,vector<string> attributes);
     void wirteDataSingletonManager();
 };
-#endif /* CsvToScript_hpp */
+

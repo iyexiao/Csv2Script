@@ -1,26 +1,26 @@
-//
-//  CsvToScript.cpp
-//  Csv2Script
-//
-//  Created by yexiao on 17/3/6.
-//  Copyright © 2017年 yexiao. All rights reserved.
-//
 
-#include "CsvToScript.hpp"
-#include <unistd.h>
+#include "CsvToScript.h"
 #include <sys/stat.h>
 #include <stdlib.h>
 
 CsvToScript::CsvToScript(){
-    typeVector = {"string","int","bool"};//目前只允许这三个类型,bool值只能填0，1
+    typeVector = {"string","int","bool"};//now only three type,bool just contain 0 or 1
 }
-// 读文件内容
+// read file 
 bool CsvToScript::readFile(const string &filename, string &content)
 {
     content.clear();
+
+
     struct stat st;
     
     if (stat (filename.c_str(), &st) >= 0) {
+
+		//char *pFileContent = (char *)malloc(st.st_size + 1);
+		//FILE *outfile = fopen(filename.c_str(), "r");
+		//fread(pFileContent, sizeof(char), st.st_size, outfile);
+		//fclose(outfile);
+
         char *pFileContent = (char *)malloc(st.st_size+1);
         if (pFileContent == NULL) {
             cout << "Error: failed to malloc size= " << st.st_size << " memory." << endl;
@@ -30,8 +30,8 @@ bool CsvToScript::readFile(const string &filename, string &content)
         FILE *fp_cfg = fopen(filename.c_str(), "r");
         int count = 0;
         while (count < st.st_size) {
-            count += fread(pFileContent, 1, st.st_size, fp_cfg);
-            usleep(1000);
+            fread(pFileContent, 1, st.st_size, fp_cfg);
+			count++;
         }
         fclose(fp_cfg);
         
@@ -150,26 +150,25 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
     
     structName = "F";
     structName.append(fileName);
-    
-    // 判断是否是xml后缀，非xml后缀则过滤掉
+    // expect csv
     string::size_type pos = csvFile.find(".csv");
     if (pos == string::npos || pos != (csvFile.length() - 4)) {
         cout << "Warning: " << m_dir << "/" << csvFile << " is not a regular csv file." << endl;
-        return;
+		exit(-1);
     }
-    // 构建Xml文件的完整路径
+    // get path
     string csvFullFilename(m_dir);
     csvFullFilename.append("/csv/");
     csvFullFilename.append(csvFile);
     
-    vector<string> attributes;//类型
-    vector<string> attrinames;//属性名称
-    string txtContent;//输出的txt数据
-    int index = 0;//数据
-    
+    vector<string> attributes;//type
+    vector<string> attrinames;//value name
+    string txtContent;//out txt
+
+
     string cfgFileContent;
     vector<string> fileLines;
-    // 读取csv文件内容
+    // read csv
     readFile (csvFullFilename, cfgFileContent);
     if (cfgFileContent.length() > 0) {
         vector<string> tmpV = splitStringByDelim(cfgFileContent, "\n");
@@ -180,15 +179,14 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
         }
         
         vector<string>::iterator itr=tmpV.begin();
-        // 过滤第一行，第一行为注释行
+        // expect first cow
         itr ++;
-        // 解析第二行数据，取得该列数据的“类型”。
+        // parse type
         attributes = parseCsvLine(*itr);
-        //判断类型是否正确
+        // check type and name
         for (int i = 0; i < attributes.size(); i ++) {
             bool isHave = false;
             for (int j = 0; j<typeVector.size(); j++) {
-//                cout<<"sss"<<attributes.at(i)<<typeVector.at(j)<<"--\n"<<endl;
                 if (attributes.at(i).compare(typeVector.at(j)) == 0) {
                     isHave = true;
                     break;
@@ -200,7 +198,7 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
             }
         }
         itr ++;
-        //获取CSV文件第3行数据，第3行为属性名字
+        //get value name
         attrinames = parseCsvLine(*itr);
         
         if (attrinames.size() != attributes.size()) {
@@ -210,16 +208,16 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
         itr ++;
         for (; itr !=tmpV.end(); itr++){
             if ((*itr).compare("") == 0) {
-                //若该行没数据，则跳过
+                //none data
                 continue;
             }
             if (txtContent.compare("")!=0) {
-                txtContent.append("\n");//有数据，则换行变成下一条数据
+                txtContent.append("\n");//add \n when first cow
             }
             vector<string> tmpV01 = parseCsvLine(*itr);
             for (int i = 0; i < tmpV01.size(); i ++) {
                 string value = tmpV01.at(i);
-                //判断第一行不能为空，并且为数字
+                //check first row is int 
                 if (i == 0) {
                     if (value.compare("")==0 || attributes.at(0).compare("int")!=0 || std::atoi(value.c_str()) <= 0) {
                         cout << "Error. the  " << attributes.at(0) << " is null. or not type int" << endl;
@@ -243,7 +241,6 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
                 txtContent.append(value).append(",");
                 
             }
-            index ++;
         }
     }
     string outFullFilename(m_dir);
@@ -264,24 +261,25 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
     writeHeadScript(attrinames, attributes);
     writeCppScript(attrinames,attributes);
     wirteDataSingletonManager();
+	cout << "done!\n" << endl;
 }
 
 void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attributes){
     string PROJ = m_proj;
     
-    //转换为大写
+    //upper
     for (int i = 0; i < PROJ.size(); i++) {
         PROJ[i] = toupper(PROJ[i]);
     }
-    //写入.h文件
+    //write .h
     string className = "DB_";
     className.append(fileName);
-    //写入头文件引用
+    //write include
     string dataStr;
     dataStr.append("#pragma once\n\n");
     dataStr.append("#include \"UObject/NoExportTypes.h\"\n");
     dataStr.append("#include \"").append(className).append(".generated.h\"\n\n");
-    //写入数据结构体
+    //write struct
     dataStr.append("USTRUCT(BlueprintType)\n");
     dataStr.append("struct ").append(structName).append("\n");
     dataStr.append("{\n");
@@ -302,7 +300,7 @@ void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attri
         dataStr.append("    ").append(typeStr).append(" ").append(attrinames.at(i)).append(";\n");
     }
     dataStr.append("};\n\n\n");
-    //写入类
+    //write class
     dataStr.append("UCLASS(Blueprintable)\n");
     dataStr.append("class ").append(PROJ).append("_API UDB_").append(fileName).append(" : public UObject\n");
     dataStr.append("{\n");
@@ -336,7 +334,7 @@ void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attri
 void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attributes)
 {
     string PROJ = m_proj;
-    //转换为大写
+    //upper
     for (int i = 0; i < PROJ.size(); i++) {
         PROJ[i] = toupper(PROJ[i]);
     }
@@ -347,9 +345,9 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     string dataStr= "";
     dataStr.append("#include \"").append(m_proj).append(".h\"\n");
     dataStr.append("#include \"").append(className).append(".h\"\n\n");
-    //构造方法
+    //
     dataStr.append("UDB_").append(fileName).append("::UDB_").append(fileName).append("()\n{\n\n}\n");
-    //添加loadData方法
+    // add loadData function
     dataStr.append("bool UDB_").append(fileName).append("::loadData()\n");
     dataStr.append("{\n");
     dataStr.append("	FString path = FPaths::GameDir() + \"Content/DB/DB_").append(fileName).append(".txt\";\n");
@@ -390,13 +388,13 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     dataStr.append("	}\n");
     dataStr.append("	return true;\n");
     dataStr.append("}\n\n");
-    //添加getXXXById方法
+    //add getXXXById() function
 
     dataStr.append(structName).append(" UDB_").append(fileName).append("::get").append(fileName).append("ById(int32 _id)\n");
     dataStr.append("{\n");
     dataStr.append("	return m_map.FindRef(_id);\n");
     dataStr.append("}\n");
-    //写入.cpp文件
+    //write .cpp
     string outHeadFilename(m_dir);
     outHeadFilename.append("/export/DB_");
     outHeadFilename.append(fileName).append(".cpp");
@@ -412,19 +410,19 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
 
 void CsvToScript::wirteDataSingletonManager()
 {
-    //写h文件
+    //write .h
     string hName =m_dir;
     hName.append("/export/DataSingletonManager.h");
     string contentStr;
     bool read = readFile(hName,contentStr);
     if (!read) {
-         //文件不存在所以重新写入
+         //file not exit
         contentStr.append("#pragma once\n\n");
         contentStr.append("#include \"Kismet/BlueprintFunctionLibrary.h\"\n");
         contentStr.append("#include \"DataSingletonManager.generated.h\"\n\n");
         contentStr.append("UCLASS(Blueprintable)\n");
         string PROJ = m_proj;
-        //转换为大写
+        //
         for (int i = 0; i < PROJ.size(); i++) {
             PROJ[i] = toupper(PROJ[i]);
         }
@@ -465,13 +463,13 @@ void CsvToScript::wirteDataSingletonManager()
     fflush(fp);
     fclose(fp);
     
-    //写cpp文件
+    //write cpp
     string cppName =m_dir;
     cppName.append("/export/DataSingletonManager.cpp");
     string cppStr;
     bool readC = readFile(cppName,cppStr);
     if (!readC) {
-        //文件不存在所以重新写入
+        //file not exit
         cppStr.append("#include \"GodProj.h\"\n");
         cppStr.append("#include \"DataSingletonManager.h\"\n\n");
     }
@@ -496,5 +494,3 @@ void CsvToScript::wirteDataSingletonManager()
     fflush(fpc);
     fclose(fpc);
 }
-
-
