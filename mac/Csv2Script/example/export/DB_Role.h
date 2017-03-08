@@ -1,47 +1,44 @@
 #pragma once
 
 #include "UObject/NoExportTypes.h"
-#include "DB_Skill.generated.h"
+#include "DB_Role.generated.h"
 
 USTRUCT(BlueprintType)
-struct FSkill
+struct FRole
 {
     GENERATED_USTRUCT_BODY()
 public:
-    FSkill(){};
+    FRole(){};
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DATA_DB")
     int32 id;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DATA_DB")
-    int32 petId;
+    int32 roleType;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DATA_DB")
-    int32 skillId;
+    int32 roleSex;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DATA_DB")
-    FString skillName;
+    FString roleDetail;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DATA_DB")
-    FString skillEffect;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DATA_DB")
-    bool isEffect;
+    bool isOpen;
 };
 
 
 UCLASS(Blueprintable)
-class GODPROJ_API UDB_Skill : public UObject
+class GODPROJ_API UDB_Role : public UObject
 {
 	GENERATED_BODY()
 public:
-	TMap<int32, FSkill> m_map;
+	TMap<int32, FRole> m_map;
 
-	UDB_Skill();
-	~UDB_Skill(){};
+	UDB_Role();
+	~UDB_Role(){};
     bool loadData();
 
 
 	UFUNCTION(BlueprintCallable, Category = "DATA_DB")
-    FSkill getSkillById(int32 _id);
+    FRole getRoleById(int32 _id);
 };

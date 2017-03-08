@@ -140,8 +140,17 @@ void string_replace(string&s1,const string&s2,const string&s3)
     }
 }
 void CsvToScript::csvToScript(string csvFile,string path,string proj){
+    string sStr = csvFile;
+    sStr[0] = toupper(sStr[0]);
+    string_replace(sStr,".csv","");
+    
     m_dir = path;
     m_proj = proj;
+    fileName = sStr;
+    
+    structName = "F";
+    structName.append(fileName);
+    
     // 判断是否是xml后缀，非xml后缀则过滤掉
     string::size_type pos = csvFile.find(".csv");
     if (pos == string::npos || pos != (csvFile.length() - 4)) {
@@ -200,6 +209,13 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
         }
         itr ++;
         for (; itr !=tmpV.end(); itr++){
+            if ((*itr).compare("") == 0) {
+                //若该行没数据，则跳过
+                continue;
+            }
+            if (txtContent.compare("")!=0) {
+                txtContent.append("\n");//有数据，则换行变成下一条数据
+            }
             vector<string> tmpV01 = parseCsvLine(*itr);
             for (int i = 0; i < tmpV01.size(); i ++) {
                 string value = tmpV01.at(i);
@@ -224,21 +240,15 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
                         value = "0";
                     }
                 }
-                if (i == tmpV01.size() -1) {
-                    txtContent.append(value).append(",\n");//最后一列也需要加, 防止字符串为空的时候
-                }else{
-                    txtContent.append(value).append(",");
-                }
+                txtContent.append(value).append(",");
+                
             }
             index ++;
         }
     }
-    string outF = csvFile;
-    outF[0] = toupper(outF[0]);
-    string_replace(outF,".csv",".txt");
     string outFullFilename(m_dir);
     outFullFilename.append("/export/DB_");
-    outFullFilename.append(outF);
+    outFullFilename.append(fileName).append(".txt");
     
     FILE *fp = fopen (outFullFilename.c_str(), "w");
     if (fp == NULL) {
@@ -250,21 +260,22 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
     fflush(fp);
     fclose(fp);
     
-    writeHeadScript(outF, attrinames, attributes);
-    writeCppScript(outF,attrinames,attributes);
+    
+    writeHeadScript(attrinames, attributes);
+    writeCppScript(attrinames,attributes);
+    wirteDataSingletonManager();
 }
 
-void CsvToScript::writeHeadScript(string csvFile,vector<string> attrinames,vector<string> attributes){
+void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attributes){
     string PROJ = m_proj;
-    string structName =csvFile;//文件名（去掉后缀）,即为结构体名称
-    string_replace(structName,".txt","");
+    
     //转换为大写
     for (int i = 0; i < PROJ.size(); i++) {
         PROJ[i] = toupper(PROJ[i]);
     }
     //写入.h文件
     string className = "DB_";
-    className.append(structName);
+    className.append(fileName);
     //写入头文件引用
     string dataStr;
     dataStr.append("#pragma once\n\n");
@@ -293,25 +304,23 @@ void CsvToScript::writeHeadScript(string csvFile,vector<string> attrinames,vecto
     dataStr.append("};\n\n\n");
     //写入类
     dataStr.append("UCLASS(Blueprintable)\n");
-    dataStr.append("class ").append(PROJ).append("_API U").append(className).append(" : public UObject\n");
+    dataStr.append("class ").append(PROJ).append("_API UDB_").append(fileName).append(" : public UObject\n");
     dataStr.append("{\n");
     dataStr.append("	GENERATED_BODY()\n");
     dataStr.append("public:\n");
     dataStr.append("	TMap<int32, ").append(structName).append("> m_map;\n\n");
-    dataStr.append("	U").append(className).append("();\n");
-    dataStr.append("	~U").append(className).append("(){};\n");
+    dataStr.append("	UDB_").append(fileName).append("();\n");
+    dataStr.append("	~UDB_").append(fileName).append("(){};\n");
     dataStr.append("    bool loadData();\n");
     dataStr.append("\n\n");
     dataStr.append("	UFUNCTION(BlueprintCallable, Category = \"DATA_DB\")\n");
-    dataStr.append("    ").append(structName).append(" get").append(structName).append("ById(int32 _id);\n");
+    dataStr.append("    ").append(structName).append(" get").append(fileName).append("ById(int32 _id);\n");
     dataStr.append("};\n");
     
     
-    string oName = csvFile;
-    string_replace(oName,".txt",".h");
     string outHeadFilename(m_dir);
     outHeadFilename.append("/export/DB_");
-    outHeadFilename.append(oName);
+    outHeadFilename.append(fileName).append(".h");
     
     FILE *fp = fopen (outHeadFilename.c_str(), "w");
     if (fp == NULL) {
@@ -324,31 +333,26 @@ void CsvToScript::writeHeadScript(string csvFile,vector<string> attrinames,vecto
     fclose(fp);
 
 }
-void CsvToScript::writeCppScript(string csvFile, vector<string> attrinames, vector<string> attributes)
+void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attributes)
 {
     string PROJ = m_proj;
     //转换为大写
     for (int i = 0; i < PROJ.size(); i++) {
         PROJ[i] = toupper(PROJ[i]);
     }
-    string structName =csvFile;//文件名（去掉后缀）,即为结构体名称
-    string_replace(structName,".txt","");
     
     string className = "DB_";
-    className.append(structName);
+    className.append(fileName);
     
     string dataStr= "";
     dataStr.append("#include \"").append(m_proj).append(".h\"\n");
     dataStr.append("#include \"").append(className).append(".h\"\n\n");
     //构造方法
-    dataStr.append("U").append(className).append("::U").append(className).append("()\n");
-    dataStr.append("{\n");
-    dataStr.append("	loadData();\n");
-    dataStr.append("}\n");
+    dataStr.append("UDB_").append(fileName).append("::UDB_").append(fileName).append("()\n{\n\n}\n");
     //添加loadData方法
-    dataStr.append("bool U").append(className).append("::loadData()\n");
+    dataStr.append("bool UDB_").append(fileName).append("::loadData()\n");
     dataStr.append("{\n");
-    dataStr.append("	FString path = FPaths::GameDir() + \"Content/DB/").append(className).append(".txt\";\n");
+    dataStr.append("	FString path = FPaths::GameDir() + \"Content/DB/DB_").append(fileName).append(".txt\";\n");
     dataStr.append("	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*path))\n");
     dataStr.append("		return false;\n");
     dataStr.append("	TArray<FString> db;\n");
@@ -387,18 +391,15 @@ void CsvToScript::writeCppScript(string csvFile, vector<string> attrinames, vect
     dataStr.append("	return true;\n");
     dataStr.append("}\n\n");
     //添加getXXXById方法
-    string oldFStr = csvFile;
-    string_replace(oldFStr,".txt","");
-    dataStr.append(structName).append(" U").append(className).append("::get").append(oldFStr).append("ById(int32 _id)\n");
+
+    dataStr.append(structName).append(" UDB_").append(fileName).append("::get").append(fileName).append("ById(int32 _id)\n");
     dataStr.append("{\n");
     dataStr.append("	return m_map.FindRef(_id);\n");
     dataStr.append("}\n");
     //写入.cpp文件
-    string oName = csvFile;
-    string_replace(oName,".txt",".cpp");
     string outHeadFilename(m_dir);
     outHeadFilename.append("/export/DB_");
-    outHeadFilename.append(oName);
+    outHeadFilename.append(fileName).append(".cpp");
     FILE *fp = fopen (outHeadFilename.c_str(), "w");
     if (fp == NULL) {
         printf ("Error: failed to open file %s, %s\n", outHeadFilename.c_str(), strerror(errno));
@@ -409,6 +410,91 @@ void CsvToScript::writeCppScript(string csvFile, vector<string> attrinames, vect
     fclose(fp);
 }
 
+void CsvToScript::wirteDataSingletonManager()
+{
+    //写h文件
+    string hName =m_dir;
+    hName.append("/export/DataSingletonManager.h");
+    string contentStr;
+    bool read = readFile(hName,contentStr);
+    if (!read) {
+         //文件不存在所以重新写入
+        contentStr.append("#pragma once\n\n");
+        contentStr.append("#include \"Kismet/BlueprintFunctionLibrary.h\"\n");
+        contentStr.append("#include \"DataSingletonManager.generated.h\"\n\n");
+        contentStr.append("UCLASS(Blueprintable)\n");
+        string PROJ = m_proj;
+        //转换为大写
+        for (int i = 0; i < PROJ.size(); i++) {
+            PROJ[i] = toupper(PROJ[i]);
+        }
+        contentStr.append("class ").append(PROJ).append("_API UDataSingletonManager : public UBlueprintFunctionLibrary\n");
+        contentStr.append("{\n");
+        contentStr.append("	GENERATED_BODY()\n");
+        contentStr.append("private:\n");
+        contentStr.append("public:\n");
+        contentStr.append("};\n");
+    }
 
+    string newContent;
+    vector<string> tmpV = splitStringByDelim(contentStr, "\n");
+    vector<string>::iterator itr=tmpV.begin();
+    
+    for (; itr !=tmpV.end(); itr++){
+        string tmp = (*itr);
+        if (itr == tmpV.begin() + 2) {
+            newContent.append("#include \"DB_").append(fileName).append(".h\"\n");
+        }
+        if (tmp.compare("public:") == 0) {
+            newContent.append("	static UDB_").append(fileName).append("* m_DB_").append(fileName).append(";\n");
+        }
+        if (itr == tmpV.end() - 1) {
+            newContent.append("	UFUNCTION(BlueprintCallable, Category = \"DATA_DB\")\n");
+            newContent.append("	static UDB_").append(fileName).append("* GetDB_").append(fileName).append("();\n");
+            
+        }
+        newContent.append(tmp).append("\n");
+    }
+    
+    FILE *fp = fopen (hName.c_str(), "w");
+    if (fp == NULL) {
+        printf ("Error: failed to open file %s, %s\n", hName.c_str(), strerror(errno));
+        exit(-1);
+    }
+    fprintf(fp, "%s", newContent.c_str());
+    fflush(fp);
+    fclose(fp);
+    
+    //写cpp文件
+    string cppName =m_dir;
+    cppName.append("/export/DataSingletonManager.cpp");
+    string cppStr;
+    bool readC = readFile(cppName,cppStr);
+    if (!readC) {
+        //文件不存在所以重新写入
+        cppStr.append("#include \"GodProj.h\"\n");
+        cppStr.append("#include \"DataSingletonManager.h\"\n\n");
+    }
+    
+    cppStr.append("UDB_").append(fileName).append("* UDataSingletonManager::m_DB_").append(fileName).append("(NULL);\n");
+    cppStr.append("UDB_").append(fileName).append("* UDataSingletonManager::GetDB_").append(fileName).append("()\n");
+    cppStr.append("{");
+    cppStr.append("    if (!m_DB_").append(fileName).append(")\n");
+    cppStr.append("    {\n");
+    cppStr.append("        m_DB_").append(fileName).append(" = NewObject<UDB_").append(fileName).append(">();\n");
+    cppStr.append("        m_DB_").append(fileName).append("->loadData();\n");
+    cppStr.append("    }\n");
+    cppStr.append("    return m_DB_").append(fileName).append(";\n");
+    cppStr.append("}\n\n");
+
+    FILE *fpc = fopen (cppName.c_str(), "w");
+    if (fpc == NULL) {
+        printf ("Error: failed to open file %s, %s\n", cppName.c_str(), strerror(errno));
+        exit(-1);
+    }
+    fprintf(fpc, "%s", cppStr.c_str());
+    fflush(fpc);
+    fclose(fpc);
+}
 
 

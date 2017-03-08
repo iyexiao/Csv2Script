@@ -1,13 +1,13 @@
 #include "GodProj.h"
-#include "DB_Skill.h"
+#include "DB_Role.h"
 
-UDB_Skill::UDB_Skill()
+UDB_Role::UDB_Role()
 {
 
 }
-bool UDB_Skill::loadData()
+bool UDB_Role::loadData()
 {
-	FString path = FPaths::GameDir() + "Content/DB/DB_Skill.txt";
+	FString path = FPaths::GameDir() + "Content/DB/DB_Role.txt";
 	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*path))
 		return false;
 	TArray<FString> db;
@@ -19,22 +19,21 @@ bool UDB_Skill::loadData()
 		FString aString = db[i];
 		TArray<FString> array = {};
 		aString.ParseIntoArray(array, TEXT(","), false);
-		FSkill dbS;
+		FRole dbS;
 		dbS.id = FCString::Atoi(*array[0]);
-		dbS.petId = FCString::Atoi(*array[1]);
-		dbS.skillId = FCString::Atoi(*array[2]);
-		dbS.skillName = *array[3];
-		dbS.skillEffect = *array[4];
- 		if (FCString::Atoi(*array[5]) == 1)
-			dbS.isEffect = true;
+		dbS.roleType = FCString::Atoi(*array[1]);
+		dbS.roleSex = FCString::Atoi(*array[2]);
+		dbS.roleDetail = *array[3];
+ 		if (FCString::Atoi(*array[4]) == 1)
+			dbS.isOpen = true;
 		else
-			dbS.isEffect = false;
+			dbS.isOpen = false;
 		m_map.Add(dbS.id, dbS);
 	}
 	return true;
 }
 
-FSkill UDB_Skill::getSkillById(int32 _id)
+FRole UDB_Role::getRoleById(int32 _id)
 {
 	return m_map.FindRef(_id);
 }

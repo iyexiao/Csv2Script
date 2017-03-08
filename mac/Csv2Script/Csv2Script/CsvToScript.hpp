@@ -22,6 +22,8 @@ class CsvToScript {
 private:
     string m_dir;
     string m_proj;
+    string structName;
+    string fileName;
     vector<string> typeVector;//表格数据类型
 public:
     CsvToScript();
@@ -32,7 +34,8 @@ public:
     vector<string> splitStringByDelim (const string str, const string delim);
     vector<string> parseCsvLine(const string str);
     
-    void writeHeadScript(string csvFile,vector<string> attrinames,vector<string> attributes);
-    void writeCppScript(string csvFile,vector<string> attrinames,vector<string> attributes);
+    void writeHeadScript(vector<string> attrinames,vector<string> attributes);
+    void writeCppScript(vector<string> attrinames,vector<string> attributes);
+    void wirteDataSingletonManager();
 };
 #endif /* CsvToScript_hpp */
