@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		E4A208651E6D41D600565844 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4A208641E6D41D600565844 /* main.cpp */; };
-		E4A2086D1E6D433200565844 /* CsvToScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4A2086B1E6D433200565844 /* CsvToScript.cpp */; };
+		E4EC0BFE1E70F305002AD587 /* CsvToScript.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4EC0BFC1E70F305002AD587 /* CsvToScript.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,8 +26,8 @@
 /* Begin PBXFileReference section */
 		E4A208611E6D41D600565844 /* Csv2Script */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Csv2Script; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4A208641E6D41D600565844 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		E4A2086B1E6D433200565844 /* CsvToScript.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CsvToScript.cpp; sourceTree = "<group>"; };
-		E4A2086C1E6D433200565844 /* CsvToScript.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = CsvToScript.hpp; sourceTree = "<group>"; };
+		E4EC0BFC1E70F305002AD587 /* CsvToScript.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CsvToScript.cpp; path = ../../../Classes/CsvToScript.cpp; sourceTree = "<group>"; };
+		E4EC0BFD1E70F305002AD587 /* CsvToScript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CsvToScript.h; path = ../../../Classes/CsvToScript.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,9 +60,9 @@
 		E4A208631E6D41D600565844 /* Csv2Script */ = {
 			isa = PBXGroup;
 			children = (
+				E4EC0BFC1E70F305002AD587 /* CsvToScript.cpp */,
+				E4EC0BFD1E70F305002AD587 /* CsvToScript.h */,
 				E4A208641E6D41D600565844 /* main.cpp */,
-				E4A2086B1E6D433200565844 /* CsvToScript.cpp */,
-				E4A2086C1E6D433200565844 /* CsvToScript.hpp */,
 			);
 			path = Csv2Script;
 			sourceTree = "<group>";
@@ -124,7 +124,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E4A2086D1E6D433200565844 /* CsvToScript.cpp in Sources */,
+				E4EC0BFE1E70F305002AD587 /* CsvToScript.cpp in Sources */,
 				E4A208651E6D41D600565844 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -252,6 +252,7 @@
 				E4A2086A1E6D41D600565844 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

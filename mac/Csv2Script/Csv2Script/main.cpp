@@ -7,7 +7,7 @@
 //
 
 #include <iostream>
-#include "CsvToScript.hpp"
+#include "CsvToScript.h"
 
 int main(int argc, const char * argv[]) {
     if (argc != 4) {

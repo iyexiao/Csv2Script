@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UObject/NoExportTypes.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "DB_Role.generated.h"
 
 USTRUCT(BlueprintType)
@@ -28,11 +28,10 @@ public:
 
 
 UCLASS(Blueprintable)
-class GODPROJ_API UDB_Role : public UObject
+class GODPROJ_API UDB_Role : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
-	TMap<int32, FRole> m_map;
 
 	UDB_Role();
 	~UDB_Role(){};
@@ -40,5 +39,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "DATA_DB")
-    FRole getRoleById(int32 _id);
+    static FRole getRoleById(int32 _id);
+	UFUNCTION(BlueprintCallable, Category = "DATA_DB")
+    static TArray<FRole> getAllRoleDB();
 };

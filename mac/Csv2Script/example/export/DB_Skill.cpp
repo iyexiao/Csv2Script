@@ -1,19 +1,22 @@
 #include "GodProj.h"
 #include "DB_Skill.h"
 
+static TMap<int32, FSkill> m_map;
+
 UDB_Skill::UDB_Skill()
 {
-
+     loadData();
 }
 bool UDB_Skill::loadData()
 {
+    m_map.Empty();
 	FString path = FPaths::GameDir() + "Content/DB/DB_Skill.txt";
 	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*path))
 		return false;
 	TArray<FString> db;
 	FString contentStr;
 	FFileHelper::LoadFileToString(contentStr,*path);
-	contentStr.ParseIntoArray(db, TEXT("\\n"), false);
+	contentStr.ParseIntoArray(db, TEXT("\n"), false);
 	for (int i = 0; i < db.Num(); i++)
 	{
 		FString aString = db[i];
@@ -38,3 +41,11 @@ FSkill UDB_Skill::getSkillById(int32 _id)
 {
 	return m_map.FindRef(_id);
 }
+TArray<FSkill> UDB_Skill::getAllSkillDB()
+{
+    TArray<FSkill> db;
+    for (TPair<int32,FSkill>& element : m_map)
+    {
+        db.Add(element.Value);
+    }
+    return db;

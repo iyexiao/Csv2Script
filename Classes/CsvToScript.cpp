@@ -260,8 +260,6 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
     
     writeHeadScript(attrinames, attributes);
     writeCppScript(attrinames,attributes);
-    wirteDataSingletonManager();
-	cout << "done!\n" << endl;
 }
 
 void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attributes){
@@ -277,7 +275,7 @@ void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attri
     //write include
     string dataStr;
     dataStr.append("#pragma once\n\n");
-    dataStr.append("#include \"UObject/NoExportTypes.h\"\n");
+    dataStr.append("#include \"Kismet/BlueprintFunctionLibrary.h\"\n");
     dataStr.append("#include \"").append(className).append(".generated.h\"\n\n");
     //write struct
     dataStr.append("USTRUCT(BlueprintType)\n");
@@ -302,17 +300,18 @@ void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attri
     dataStr.append("};\n\n\n");
     //write class
     dataStr.append("UCLASS(Blueprintable)\n");
-    dataStr.append("class ").append(PROJ).append("_API UDB_").append(fileName).append(" : public UObject\n");
+    dataStr.append("class ").append(PROJ).append("_API UDB_").append(fileName).append(" : public UBlueprintFunctionLibrary\n");
     dataStr.append("{\n");
     dataStr.append("	GENERATED_BODY()\n");
-    dataStr.append("public:\n");
-    dataStr.append("	TMap<int32, ").append(structName).append("> m_map;\n\n");
+    dataStr.append("public:\n\n");
     dataStr.append("	UDB_").append(fileName).append("();\n");
     dataStr.append("	~UDB_").append(fileName).append("(){};\n");
     dataStr.append("    bool loadData();\n");
     dataStr.append("\n\n");
     dataStr.append("	UFUNCTION(BlueprintCallable, Category = \"DATA_DB\")\n");
-    dataStr.append("    ").append(structName).append(" get").append(fileName).append("ById(int32 _id);\n");
+    dataStr.append("    static ").append(structName).append(" get").append(fileName).append("ById(int32 _id);\n");
+    dataStr.append("	UFUNCTION(BlueprintCallable, Category = \"DATA_DB\")\n");
+    dataStr.append("    static TArray<").append(structName).append("> getAll").append(fileName).append("DB();\n");
     dataStr.append("};\n");
     
     
@@ -346,17 +345,21 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     dataStr.append("#include \"").append(m_proj).append(".h\"\n");
     dataStr.append("#include \"").append(className).append(".h\"\n\n");
     //
-    dataStr.append("UDB_").append(fileName).append("::UDB_").append(fileName).append("()\n{\n\n}\n");
+    
+    dataStr.append("static TMap<int32, ").append(structName).append("> m_map;\n\n");
+    dataStr.append("UDB_").append(fileName).append("::UDB_").append(fileName).append("()\n");
+    dataStr.append("{\n     loadData();\n}\n");
     // add loadData function
     dataStr.append("bool UDB_").append(fileName).append("::loadData()\n");
     dataStr.append("{\n");
+    dataStr.append("    m_map.Empty();\n");
     dataStr.append("	FString path = FPaths::GameDir() + \"Content/DB/DB_").append(fileName).append(".txt\";\n");
     dataStr.append("	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*path))\n");
     dataStr.append("		return false;\n");
     dataStr.append("	TArray<FString> db;\n");
     dataStr.append("	FString contentStr;\n");
     dataStr.append("	FFileHelper::LoadFileToString(contentStr,*path);\n");
-    dataStr.append("	contentStr.ParseIntoArray(db, TEXT(\"\\\\n\"), false);\n");
+    dataStr.append("	contentStr.ParseIntoArray(db, TEXT(\"\\n\"), false);\n");
     dataStr.append("	for (int i = 0; i < db.Num(); i++)\n");
     dataStr.append("	{\n");
     dataStr.append("		FString aString = db[i];\n");
@@ -389,11 +392,21 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     dataStr.append("	return true;\n");
     dataStr.append("}\n\n");
     //add getXXXById() function
-
     dataStr.append(structName).append(" UDB_").append(fileName).append("::get").append(fileName).append("ById(int32 _id)\n");
     dataStr.append("{\n");
     dataStr.append("	return m_map.FindRef(_id);\n");
     dataStr.append("}\n");
+    //add getAllXXXDB function
+    dataStr.append("TArray<").append(structName).append("> UDB_").append(fileName).append("::getAll").append(fileName).append("DB()\n");
+    dataStr.append("{\n");
+    dataStr.append("    TArray<").append(structName).append("> db;\n");
+    dataStr.append("    for (TPair<int32,F").append(fileName).append(">& element : m_map)\n");
+    dataStr.append("    {\n");
+    dataStr.append("        db.Add(element.Value);\n");
+    dataStr.append("    }\n");
+    dataStr.append("    return db;\n");
+    
+    
     //write .cpp
     string outHeadFilename(m_dir);
     outHeadFilename.append("/export/DB_");
@@ -406,91 +419,4 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     fprintf(fp, "%s", dataStr.c_str());
     fflush(fp);
     fclose(fp);
-}
-
-void CsvToScript::wirteDataSingletonManager()
-{
-    //write .h
-    string hName =m_dir;
-    hName.append("/export/DataSingletonManager.h");
-    string contentStr;
-    bool read = readFile(hName,contentStr);
-    if (!read) {
-         //file not exit
-        contentStr.append("#pragma once\n\n");
-        contentStr.append("#include \"Kismet/BlueprintFunctionLibrary.h\"\n");
-        contentStr.append("#include \"DataSingletonManager.generated.h\"\n\n");
-        contentStr.append("UCLASS(Blueprintable)\n");
-        string PROJ = m_proj;
-        //
-        for (int i = 0; i < PROJ.size(); i++) {
-            PROJ[i] = toupper(PROJ[i]);
-        }
-        contentStr.append("class ").append(PROJ).append("_API UDataSingletonManager : public UBlueprintFunctionLibrary\n");
-        contentStr.append("{\n");
-        contentStr.append("	GENERATED_BODY()\n");
-        contentStr.append("private:\n");
-        contentStr.append("public:\n");
-        contentStr.append("};\n");
-    }
-
-    string newContent;
-    vector<string> tmpV = splitStringByDelim(contentStr, "\n");
-    vector<string>::iterator itr=tmpV.begin();
-    
-    for (; itr !=tmpV.end(); itr++){
-        string tmp = (*itr);
-        if (itr == tmpV.begin() + 2) {
-            newContent.append("#include \"DB_").append(fileName).append(".h\"\n");
-        }
-        if (tmp.compare("public:") == 0) {
-            newContent.append("	static UDB_").append(fileName).append("* m_DB_").append(fileName).append(";\n");
-        }
-        if (itr == tmpV.end() - 1) {
-            newContent.append("	UFUNCTION(BlueprintCallable, Category = \"DATA_DB\")\n");
-            newContent.append("	static UDB_").append(fileName).append("* GetDB_").append(fileName).append("();\n");
-            
-        }
-        newContent.append(tmp).append("\n");
-    }
-    
-    FILE *fp = fopen (hName.c_str(), "w");
-    if (fp == NULL) {
-        printf ("Error: failed to open file %s, %s\n", hName.c_str(), strerror(errno));
-        exit(-1);
-    }
-    fprintf(fp, "%s", newContent.c_str());
-    fflush(fp);
-    fclose(fp);
-    
-    //write cpp
-    string cppName =m_dir;
-    cppName.append("/export/DataSingletonManager.cpp");
-    string cppStr;
-    bool readC = readFile(cppName,cppStr);
-    if (!readC) {
-        //file not exit
-        cppStr.append("#include \"GodProj.h\"\n");
-        cppStr.append("#include \"DataSingletonManager.h\"\n\n");
-    }
-    
-    cppStr.append("UDB_").append(fileName).append("* UDataSingletonManager::m_DB_").append(fileName).append("(NULL);\n");
-    cppStr.append("UDB_").append(fileName).append("* UDataSingletonManager::GetDB_").append(fileName).append("()\n");
-    cppStr.append("{");
-    cppStr.append("    if (!m_DB_").append(fileName).append(")\n");
-    cppStr.append("    {\n");
-    cppStr.append("        m_DB_").append(fileName).append(" = NewObject<UDB_").append(fileName).append(">();\n");
-    cppStr.append("        m_DB_").append(fileName).append("->loadData();\n");
-    cppStr.append("    }\n");
-    cppStr.append("    return m_DB_").append(fileName).append(";\n");
-    cppStr.append("}\n\n");
-
-    FILE *fpc = fopen (cppName.c_str(), "w");
-    if (fpc == NULL) {
-        printf ("Error: failed to open file %s, %s\n", cppName.c_str(), strerror(errno));
-        exit(-1);
-    }
-    fprintf(fpc, "%s", cppStr.c_str());
-    fflush(fpc);
-    fclose(fpc);
 }

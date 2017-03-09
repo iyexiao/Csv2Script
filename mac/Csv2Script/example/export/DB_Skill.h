@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UObject/NoExportTypes.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "DB_Skill.generated.h"
 
 USTRUCT(BlueprintType)
@@ -31,11 +31,10 @@ public:
 
 
 UCLASS(Blueprintable)
-class GODPROJ_API UDB_Skill : public UObject
+class GODPROJ_API UDB_Skill : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
-	TMap<int32, FSkill> m_map;
 
 	UDB_Skill();
 	~UDB_Skill(){};
@@ -43,5 +42,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "DATA_DB")
-    FSkill getSkillById(int32 _id);
+    static FSkill getSkillById(int32 _id);
+	UFUNCTION(BlueprintCallable, Category = "DATA_DB")
+    static TArray<FSkill> getAllSkillDB();
 };

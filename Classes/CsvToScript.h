@@ -26,6 +26,5 @@ public:
     
     void writeHeadScript(vector<string> attrinames,vector<string> attributes);
     void writeCppScript(vector<string> attrinames,vector<string> attributes);
-    void wirteDataSingletonManager();
 };
 
