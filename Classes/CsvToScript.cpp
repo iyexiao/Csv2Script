@@ -405,6 +405,7 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     dataStr.append("        db.Add(element.Value);\n");
     dataStr.append("    }\n");
     dataStr.append("    return db;\n");
+    dataStr.append("}\n");
     
     
     //write .cpp
