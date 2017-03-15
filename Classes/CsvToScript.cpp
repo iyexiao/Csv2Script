@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 CsvToScript::CsvToScript(){
-    typeVector = {"string","int","bool"};//now only three type,bool just contain 0 or 1
+    typeVector = {"string","int","bool","texture"};//now only three type,bool just contain 0 or 1
 }
 // read file 
 bool CsvToScript::readFile(const string &filename, string &content)
@@ -237,6 +237,8 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
                     if (value.compare("") == 0) {
                         value = "0";
                     }
+                }else if (attributes.at(i).compare("texture") == 0){
+                    string_replace(value, ",", ".");
                 }
                 txtContent.append(value).append(",");
                 
@@ -292,6 +294,8 @@ void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attri
             typeStr = "FString";
         }else if(attributes.at(i).compare("bool") == 0){
             typeStr = "bool";
+        }else if (attributes.at(i).compare("texture") == 0){
+            typeStr ="TAssetPtr<UTexture2D>";
         }
         dataStr.append("\n");
         dataStr.append("    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = \"DATA_DB\")\n");
