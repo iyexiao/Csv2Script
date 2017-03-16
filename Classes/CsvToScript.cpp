@@ -388,7 +388,14 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
             valueStr.append("		else\n");
             valueStr.append("			dbS.").append(attrinames.at(i)).append(" = false;\n");
             dataStr.append(valueStr);
-        }
+		}
+		else if (attributes.at(i).compare("texture") == 0)
+		{
+			string valueStr = "		dbS.";
+			valueStr.append(attrinames.at(i));
+			valueStr.append(" = TAssetPtr<UTexture2D>(FStringAssetReference(*array[").append(to_string(i)).append("]));\n");
+			dataStr.append(valueStr);
+		}
         
     }
     dataStr.append("		m_map.Add(dbS.").append(attrinames.at(0)).append(", dbS);\n");
