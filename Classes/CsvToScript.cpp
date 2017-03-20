@@ -3,8 +3,17 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+
+enum AttType{
+    stringType = 0,
+    intType = 1,
+    boolType = 2,
+    textureType = 3,
+    classType = 4,
+};
+
 CsvToScript::CsvToScript(){
-    typeVector = {"string","int","bool","texture"};//now only three type,bool just contain 0 or 1
+    typeVector = {"string","int","bool","texture","class"};//now only three type,bool just contain 0 or 1
 }
 // read file 
 bool CsvToScript::readFile(const string &filename, string &content)
@@ -219,25 +228,27 @@ void CsvToScript::csvToScript(string csvFile,string path,string proj){
                 string value = tmpV01.at(i);
                 //check first row is int 
                 if (i == 0) {
-                    if (value.compare("")==0 || attributes.at(0).compare("int")!=0 || std::atoi(value.c_str()) <= 0) {
+                    if (value.compare("")==0 || attributes.at(0).compare(typeVector[intType])!=0 || std::atoi(value.c_str()) <= 0) {
                         cout << "Error. the  " << attributes.at(0) << " is null. or not type int" << endl;
                         exit(-1);
                     }
                 }
-                if (attributes.at(i).compare("bool")==0) {
+                if (attributes.at(i).compare(typeVector[boolType])==0) {
                     if (!(value.compare("0") == 0||value.compare("1")==0)) {
                         cout << "Error. File " << csvFullFilename << ". The type bool error." << endl;
                         exit(-1);
                     }
                 }
-                else if(attributes.at(i).compare("string")==0){
+                else if(attributes.at(i).compare(typeVector[stringType])==0){
 //                    string_replace(value,"\"","\"");
                     string_replace(value,",",".");
-                }else if (attributes.at(i).compare("int")==0){
+                }else if (attributes.at(i).compare(typeVector[intType])==0){
                     if (value.compare("") == 0) {
                         value = "0";
                     }
-                }else if (attributes.at(i).compare("texture") == 0){
+                }else if (attributes.at(i).compare(typeVector[textureType]) == 0){
+                    string_replace(value, ",", ".");
+                }else if (attributes.at(i).compare(typeVector[classType]) == 0){
                     string_replace(value, ",", ".");
                 }
                 txtContent.append(value).append(",");
@@ -288,14 +299,16 @@ void CsvToScript::writeHeadScript(vector<string> attrinames,vector<string> attri
     dataStr.append("    ").append(structName).append("(){};\n");
     for (int i =0; i<attrinames.size(); i++) {
         string typeStr;
-        if (attributes.at(i).compare("int") == 0) {
+        if (attributes.at(i).compare(typeVector[intType]) == 0) {
             typeStr = "int32";
-        }else if (attributes.at(i).compare("string") == 0){
+        }else if (attributes.at(i).compare(typeVector[stringType]) == 0){
             typeStr = "FString";
-        }else if(attributes.at(i).compare("bool") == 0){
+        }else if(attributes.at(i).compare(typeVector[boolType]) == 0){
             typeStr = "bool";
-        }else if (attributes.at(i).compare("texture") == 0){
+        }else if (attributes.at(i).compare(typeVector[textureType]) == 0){
             typeStr ="TAssetPtr<UTexture2D>";
+        }else if (attributes.at(i).compare(typeVector[classType]) == 0){
+            typeStr ="TAssetSubclassOf<AActor>";
         }
         dataStr.append("\n");
         dataStr.append("    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = \"DATA_DB\")\n");
@@ -371,17 +384,17 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
     dataStr.append("		aString.ParseIntoArray(array, TEXT(\",\"), false);\n");
     dataStr.append("		").append(structName).append(" dbS;\n");
     for (int i =0; i<attrinames.size(); i++) {
-        if (attributes.at(i).compare("int") == 0) {
+        if (attributes.at(i).compare(typeVector[intType]) == 0) {
             string valueStr="		dbS.";
             valueStr.append(attrinames.at(i));
             valueStr.append(" = FCString::Atoi(*array[").append(to_string(i)).append("]);\n");
             dataStr.append(valueStr);
-        }else if (attributes.at(i).compare("string") == 0){
+        }else if (attributes.at(i).compare(typeVector[stringType]) == 0){
             string valueStr="		dbS.";
             valueStr.append(attrinames.at(i));
             valueStr.append(" = *array[").append(to_string(i)).append("];\n");
             dataStr.append(valueStr);
-        }else if(attributes.at(i).compare("bool") == 0){
+        }else if(attributes.at(i).compare(typeVector[boolType]) == 0){
             string valueStr =" 		if (FCString::Atoi(*array[";
             valueStr.append(to_string(i)).append("]) == 1)\n");
             valueStr.append("			dbS.").append(attrinames.at(i)).append(" = true;\n");
@@ -389,13 +402,20 @@ void CsvToScript::writeCppScript(vector<string> attrinames, vector<string> attri
             valueStr.append("			dbS.").append(attrinames.at(i)).append(" = false;\n");
             dataStr.append(valueStr);
 		}
-		else if (attributes.at(i).compare("texture") == 0)
+		else if (attributes.at(i).compare(typeVector[textureType]) == 0)
 		{
 			string valueStr = "		dbS.";
 			valueStr.append(attrinames.at(i));
 			valueStr.append(" = TAssetPtr<UTexture2D>(FStringAssetReference(*array[").append(to_string(i)).append("]));\n");
 			dataStr.append(valueStr);
-		}
+        }
+        else if (attributes.at(i).compare(typeVector[classType]) == 0)
+        {
+            string valueStr = "		dbS.";
+            valueStr.append(attrinames.at(i));
+            valueStr.append(" = TAssetSubclassOf<AActor>(FStringAssetReference(*array[").append(to_string(i)).append("]));\n");
+            dataStr.append(valueStr);
+        }
         
     }
     dataStr.append("		m_map.Add(dbS.").append(attrinames.at(0)).append(", dbS);\n");
